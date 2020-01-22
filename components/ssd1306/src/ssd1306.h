@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2016-2018, Alexey Dynda
+    Copyright (c) 2016-2019, Alexey Dynda
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,7 @@
 #define _SSD1306_H_
 
 #include "nano_gfx_types.h"
+#include "ssd1306_generic.h"
 #include "ssd1306_1bit.h"
 #include "ssd1306_8bit.h"
 #include "ssd1306_16bit.h"
@@ -37,12 +38,14 @@
 #include "lcd/lcd_common.h"
 #include "lcd/oled_ssd1306.h"
 #include "lcd/oled_ssd1325.h"
+#include "lcd/oled_ssd1327.h"
 #include "lcd/oled_ssd1331.h"
 #include "lcd/oled_ssd1351.h"
 #include "lcd/oled_sh1106.h"
 #include "lcd/lcd_pcd8544.h"
 #include "lcd/lcd_il9163.h"
 #include "lcd/lcd_ili9341.h"
+#include "lcd/composite_video.h"
 
 #include "lcd/oled_template.h"
 

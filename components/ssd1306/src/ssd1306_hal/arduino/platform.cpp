@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2016-2018, Alexey Dynda
+    Copyright (c) 2016-2019, Alexey Dynda
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -54,23 +54,6 @@ static void ssd1306_i2cStop_Wire(void)
     Wire.endTransmission();
 }
 
-void ssd1306_i2cConfigure_Wire(int8_t scl, int8_t sda)
-{
-#if defined(ESP8266) || defined(ESP32) || defined(ESP31B)
-    if ((scl>=0) && (sda >=0))
-    {
-        Wire.begin(sda, scl);
-    }
-    else
-#endif
-    {
-        Wire.begin();
-    }
-    #ifdef SSD1306_WIRE_CLOCK_CONFIGURABLE
-        Wire.setClock(400000);
-    #endif
-}
-
 /**
  * Inputs: SCL is LOW, SDA is has no meaning
  * Outputs: SCL is LOW
@@ -84,8 +67,16 @@ static void ssd1306_i2cSendByte_Wire(uint8_t data)
     if (s_bytesWritten >= 64)
 #elif defined(BUFFER_LENGTH)
     if (s_bytesWritten >= (BUFFER_LENGTH - 2))
-#else
+#elif defined(SERIAL_BUFFER_LENGTH)
+    if (s_bytesWritten >= (SERIAL_BUFFER_LENGTH - 2))
+#elif defined(USI_BUF_SIZE)
     if (s_bytesWritten >= (USI_BUF_SIZE -2))
+#else
+    if ( Wire.write(data) != 0 )
+    {
+        s_bytesWritten++;
+        return;
+    }
 #endif
     {
         ssd1306_i2cStop_Wire();
@@ -110,12 +101,12 @@ static void ssd1306_i2cClose_Wire()
 {
 }
 
-void ssd1306_platform_i2cInit(int8_t scl, uint8_t sa, int8_t sda)
+void ssd1306_platform_i2cInit(int8_t busId, uint8_t addr, ssd1306_platform_i2cConfig_t * cfg)
 {
 #if defined(ESP8266) || defined(ESP32) || defined(ESP31B)
-    if ((scl >= 0) && (sda >=0))
+    if ((cfg->scl >= 0) && (cfg->sda >=0))
     {
-        Wire.begin(sda, scl);
+        Wire.begin(cfg->sda, cfg->scl);
     }
     else
 #endif
@@ -126,7 +117,7 @@ void ssd1306_platform_i2cInit(int8_t scl, uint8_t sa, int8_t sda)
         Wire.setClock(400000);
     #endif
 
-    if (sa) s_sa = sa;
+    if (addr) s_sa = addr;
     ssd1306_intf.spi = 0;
     ssd1306_intf.start = ssd1306_i2cStart_Wire;
     ssd1306_intf.stop = ssd1306_i2cStop_Wire;

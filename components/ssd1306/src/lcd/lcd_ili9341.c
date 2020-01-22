@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2018, Alexey Dynda
+    Copyright (c) 2018-2019, Alexey Dynda
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -141,19 +141,12 @@ void    ili9341_setMode(lcd_mode_t mode)
     s_rotation &= 0x03;
     s_rotation |= (mode == LCD_MODE_SSD1306_COMPAT ? 0x00 : 0x04);
     ili9341_setRotation( s_rotation );
-//    s_rotation = (s_rotation & 0x03) | (mode == LCD_MODE_SSD1306_COMPAT ? 0x00 : 0x04);
-/*    ssd1306_intf.start();
-    ssd1306_spiDataMode(0);
-    ssd1306_intf.send( 0x36 );
-    ssd1306_spiDataMode(1);
-    ssd1306_intf.send( (mode == LCD_MODE_SSD1306_COMPAT ? 0b10000100 : 0b10001100) | s_rgb_bit );
-    ssd1306_intf.stop(); */
     if (mode == LCD_MODE_SSD1306_COMPAT)
     {
         ssd1306_lcd.set_block = ili9341_setBlock;
         ssd1306_lcd.next_page = ili9341_nextPage;
     }
-    else
+    else if (mode == LCD_MODE_NORMAL)
     {
         ssd1306_lcd.set_block = ili9341_setBlock2;
         ssd1306_lcd.next_page = ili9341_nextPage2;
@@ -194,17 +187,24 @@ static void ili9341_sendPixel8(uint8_t data)
     ssd1306_intf.send( color & 0xFF );
 }
 
+static void ili9341_sendPixel16(uint16_t color)
+{
+    ssd1306_intf.send( color >> 8 );
+    ssd1306_intf.send( color & 0xFF );
+}
+
 void    ili9341_240x320_init()
 {
     ssd1306_lcd.type = LCD_TYPE_SSD1331;
     ssd1306_lcd.width = 240;
-    ssd1306_lcd.height = 320;
+    ssd1306_lcd.height = (lcduint_t)320;
     s_rgb_bit = 0b00001000; // set BGR mode mapping
     ssd1306_lcd.set_block = ili9341_setBlock;
     ssd1306_lcd.next_page = ili9341_nextPage;
     ssd1306_lcd.send_pixels1  = ili9341_sendPixels;
     ssd1306_lcd.send_pixels_buffer1 = ili9341_sendPixelsBuffer;
     ssd1306_lcd.send_pixels8 = ili9341_sendPixel8;
+    ssd1306_lcd.send_pixels16 = ili9341_sendPixel16;
     ssd1306_lcd.set_mode = ili9341_setMode;
     ssd1306_configureSpiDisplay(s_oled240x320_initData, sizeof(s_oled240x320_initData));
 }

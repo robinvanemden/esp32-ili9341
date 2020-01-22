@@ -4,6 +4,8 @@ FILE(GLOB SOURCES            "./src/*.c"
                              "./src/intf/*.c" 
                              "./src/intf/i2c/*.c" 
                              "./src/intf/spi/*.c" 
+		             "./src/intf/vga/esp32/*.c"
+                             "./src/intf/vga/*.c"
                              "./src/lcd/*.c" 
                              "./src/nano_engine/*.c")
 
@@ -17,6 +19,8 @@ idf_component_register(
         "./src/intf" 
         "./src/intf/i2c" 
         "./src/intf/spi" 
+        "./src/intf/vga/esp32"
+        "./src/intf/vga"
         "./src/lcd" 
         "./src/nano_engine"
 )

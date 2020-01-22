@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2016-2018, Alexey Dynda
+    Copyright (c) 2016-2019, Alexey Dynda
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -53,13 +53,6 @@ extern "C" {
  */
 
 /**
- * Set position in terms of display.
- * @param x - horizontal position in pixels
- * @param y - vertical position in blocks (pixels/8)
- */
-void         ssd1306_setPos(uint8_t x, uint8_t y);
-
-/**
  * Fills screen with pattern byte
  */
 void         ssd1306_fillScreen(uint8_t fill_Data);
@@ -96,6 +89,10 @@ void         ssd1306_positiveMode(void);
  *          Placing both of these functions to your sketch will consume almost 1KiB.
  */
 uint8_t     ssd1306_printFixed(uint8_t xpos, uint8_t y, const char *ch, EFontStyle style);
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+uint8_t ssd1306_printFixed_oldStyle(uint8_t xpos, uint8_t y, const char *ch, EFontStyle style);
+#endif
 
 /**
  * Prints text to screen using double size fixed font.
@@ -244,6 +241,20 @@ void         ssd1306_putPixels(uint8_t x, uint8_t y, uint8_t pixels);
 void         ssd1306_drawRect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2);
 
 /**
+ * Fill rectangle directly in OLED display GDRAM.
+ * This is software implementation. Some OLED controllers have hardware implementation.
+ * Refer to datasheet.
+ *
+ * @param x1 - start horizontal position in pixels
+ * @param y1 - start vertical position in pixels
+ * @param x2 - end horizontal position in pixels
+ * @param y2 - end vertical position in pixels
+ *
+ * @note set color with ssd1306_setColor() function.
+ */
+void ssd1306_fillRect(lcdint_t x1, lcdint_t y1, lcdint_t x2, lcdint_t y2);
+
+/**
  * Draws line
  * @param x1 - x position in pixels of start point
  * @param y1 - y position in pixels of start point
@@ -293,6 +304,19 @@ void         ssd1306_drawBuffer(uint8_t x, uint8_t y, uint8_t w, uint8_t h, cons
 
 /**
  * Draws bitmap, located in SRAM, on the display
+ * Each byte represents 2 horizontal grayscale pixels.
+ *
+ * @param x - horizontal position in pixels
+ * @param y - vertical position in pixels
+ * @param w - width of bitmap in pixels
+ * @param h - height of bitmap in pixels (must be divided by 8)
+ * @param buf - pointer to data, located in SRAM: each byte represents 2 horizontal pixels.
+ */
+void         ssd1306_drawBuffer1_4(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *buf);
+
+
+/**
+ * Draws bitmap, located in SRAM, on the display
  * Each byte represents 8 vertical pixels.
  *
  * ~~~~~~~~~~~~~~~{.c}
@@ -318,6 +342,7 @@ void         ssd1306_drawBufferFast(lcdint_t x, lcdint_t y, lcduint_t w, lcduint
 
 /**
  * Draws bitmap, located in Flash, on the display
+ * The bitmap should be in native ssd1306 format
  *
  * @param x - horizontal position in pixels
  * @param y - vertical position in blocks (pixels/8)
@@ -326,6 +351,34 @@ void         ssd1306_drawBufferFast(lcdint_t x, lcdint_t y, lcduint_t w, lcduint
  * @param buf - pointer to data, located in Flash: each byte represents 8 vertical pixels.
  */
 void         ssd1306_drawBitmap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *buf);
+
+/**
+ * Draws bitmap, located in Flash, on the display
+ * The bitmap should be in XBMP format
+ *
+ * @param x - horizontal position in pixels
+ * @param y - vertical position in blocks (pixels/8)
+ * @param w - width of bitmap in pixels
+ * @param h - height of bitmap in pixels (must be divided by 8)
+ * @param buf - pointer to data, located in Flash: each byte represents 8 vertical pixels.
+ */
+void         ssd1306_drawXBitmap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *buf);
+
+/**
+ * Draw bitmap, located in Flash, on the display
+ * The bitmap should be in in grayscale 4-bit format:
+ * ROW 1: 222211114444333366665555...
+ * ROW 2: 222211114444333366665555...
+ * ...
+ * ROW N: 222211114444333366665555...
+ *
+ * @param x - horizontal position in pixels
+ * @param y - vertical position in pixels
+ * @param w - width of bitmap in pixels
+ * @param h - height of bitmap in pixels (must be divided by 8)
+ * @param buf - pointer to data, located in Flash.
+ */
+void         ssd1306_drawBitmap1_4(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *buf);
 
 /**
  * Draws bitmap, located in Flash, on the display
@@ -393,118 +446,6 @@ SPRITE       ssd1306_createSprite(uint8_t x, uint8_t y, uint8_t w, const uint8_t
  * @param data - pointer to data, located in Flash: each byte represents 8 vertical pixels.
  */
 void         ssd1306_replaceSprite(SPRITE *sprite, const uint8_t *data);
-
-///////////////////////////////////////////////////////////////////////
-//                 HIGH-LEVEL GRAPH FUNCTIONS
-///////////////////////////////////////////////////////////////////////
-
-/**
- * Describes menu object
- */
-typedef struct
-{
-    /// list of menu items of the menu
-    const char **items;
-    /// count of menu items in the menu
-    uint8_t     count;
-    /// currently selected item. Internally updated.
-    uint8_t     selection;
-    /// selected item, when last redraw operation was performed. Internally updated.
-    uint8_t     oldSelection;
-    /// position of menu scrolling. Internally updated
-    uint8_t     scrollPosition;
-} SAppMenu;
-
-/**
- * Creates menu object with the provided list of menu items.
- * List of menu items (strings) must exist all until menu object is no longer needed.
- * Selection is set to the first item by default.
- *
- * @param menu - Pointer to SAppMenu structure
- * @param items - array of null-termintated strings (located in SRAM)
- * @param count - count of menu items in the array
- */
-void ssd1306_createMenu(SAppMenu *menu, const char **items, uint8_t count);
-
-/**
- * Shows menu items on the display. If menu items cannot fit the display,
- * the function provides scrolling.
- *
- * @param menu - Pointer to SAppMenu structure
- *
- * @warning works only in SSD1306 compatible mode.
- */
-void ssd1306_showMenu(SAppMenu *menu);
-
-/**
- * Shows menu items on the display. If menu items cannot fit the display,
- * the function provides scrolling.
- *
- * @param menu - Pointer to SAppMenu structure
- *
- * @warning works only in 8-bit RGB normal mode.
- */
-void ssd1306_showMenu8(SAppMenu *menu);
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-static inline void ssd1331_showMenu8(SAppMenu *menu)
-{
-    ssd1306_showMenu8(menu);
-}
-#endif
-
-/**
- * Updates menu items on the display. That is if selection is changed,
- * the function will update only those areas, affected by the change.
- *
- * @param menu - Pointer to SAppMenu structure
- */
-void ssd1306_updateMenu(SAppMenu *menu);
-
-/**
- * Updates menu items on the display. That is if selection is changed,
- * the function will update only those areas, affected by the change.
- *
- * @param menu - Pointer to SAppMenu structure
- *
- * @warning works only in SSD1306 compatible mode.
- */
-void ssd1306_updateMenu8(SAppMenu *menu);
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-static inline void ssd1331_updateMenu8(SAppMenu *menu)
-{
-    ssd1306_updateMenu8(menu);
-}
-#endif
-
-/**
- * Returns currently selected menu item.
- * First item has zero-index.
- *
- * @param menu - Pointer to SAppMenu structure
- *
- * @warning works only in 8-bit RGB normal mode.
- */
-uint8_t ssd1306_menuSelection(SAppMenu *menu);
-
-/**
- * Moves selection pointer down by 1 item. If there are no items below,
- * it will set selection pointer to the first item.
- * Use ssd1306_updateMenu() to refresh menu state on the display.
- *
- * @param menu - Pointer to SAppMenu structure
- */
-void ssd1306_menuDown(SAppMenu *menu);
-
-/**
- * Moves selection pointer up by 1 item. If selected item is the first one,
- * then selection pointer will set to the last item in menu list.
- * Use ssd1306_updateMenu() to refresh menu state on the display.
- *
- * @param menu - Pointer to SAppMenu structure
- */
-void ssd1306_menuUp(SAppMenu *menu);
 
 /**
  * @}
