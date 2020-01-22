@@ -216,11 +216,14 @@ void   ili9341_240x320_spi_init(int8_t rstPin, int8_t cesPin, int8_t dcPin)
         pinMode(rstPin, OUTPUT);
         digitalWrite(rstPin, HIGH);
         /* Wait at least 1ms after VCC is up for LCD */
-        delay(1);
+        delay(100);
         /* Perform reset operation of LCD display */
         digitalWrite(rstPin, LOW);
         delay(100);
         digitalWrite(rstPin, HIGH);
+
+
+        
     }
     s_ssd1306_spi_clock = 10000000;
     ssd1306_spiInit(cesPin, dcPin);
