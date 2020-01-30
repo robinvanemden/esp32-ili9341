@@ -216,14 +216,12 @@ void   ili9341_240x320_spi_init(int8_t rstPin, int8_t cesPin, int8_t dcPin)
         pinMode(rstPin, OUTPUT);
         digitalWrite(rstPin, HIGH);
         /* Wait at least 1ms after VCC is up for LCD */
-        delay(100);
+        delay(1);
         /* Perform reset operation of LCD display */
         digitalWrite(rstPin, LOW);
         delay(100);
         digitalWrite(rstPin, HIGH);
-
-
-        
+        delay(100);
     }
     s_ssd1306_spi_clock = 10000000;
     ssd1306_spiInit(cesPin, dcPin);
@@ -245,6 +243,16 @@ void ili9341_setRotation(uint8_t rotation)
     ssd1306_intf.send(0x28);
     ssd1306_intf.send(0x36);
     ssd1306_spiDataMode(1);
+
+    # define  MADCTL_MY   0x80   // / <Bottom to top
+    # define  MADCTL_MX   0x40   // / <Right to left
+    # define  MADCTL_MV   0x20   // / <Reverse Mode
+    # define  MADCTL_ML   0x10   // / <LCD refresh Bottom to top
+    # define  MADCTL_RGB  0x00   // / <Red-Green-Blue pixel order
+    # define  MADCTL_BGR  0x08   // / <Blue-Green-Red pixel order
+    # define  MADCTL_MH   0x04   // / <LCD refresh right to left
+
+    
     switch (s_rotation)
     {
     case 0:
